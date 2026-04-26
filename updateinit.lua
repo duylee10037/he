@@ -1,42 +1,35 @@
-local Players     = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local Player      = Players.LocalPlayer
+local Players      = game:GetService("Players")
+local HttpService  = game:GetService("HttpService")
+local Player       = Players.LocalPlayer
 
-local API_URL = "https://web-wheat-nu-97.vercel.app/api/verify"
+local API_URL        = "https://web-wheat-nu-97.vercel.app/api/verify"
 local CLIENT_VERSION = "1.0.0"
 
--- ===== GET KEY (GIỮ NGUYÊN) =====
 local Key = tostring(getgenv().Key or ""):gsub("%s+", "")
+
 if Key == "" then
-    warn("Thiếu key!")
+    warn("❌ Thiếu key!")
     return
 end
 
--- ===== DEVICE ID =====
+-- Lấy deviceId
 local deviceId = "unknown-device"
 pcall(function()
     deviceId = game:GetService("RbxAnalyticsService"):GetClientId()
 end)
 
--- ===== BODY =====
+-- Tạo body JSON
 local body = HttpService:JSONEncode({
-    key = Key,
-    deviceId = deviceId,
+    key           = Key,
+    deviceId      = deviceId,
     clientVersion = CLIENT_VERSION
 })
 
--- ===== REQUEST (CHUẨN EXECUTOR) =====
-local httpRequest = (syn and syn.request) or (http and http.request) or http_request or request
-
-if not httpRequest then
-    warn("Executor không hỗ trợ request!")
-    return
-end
-
+-- Gửi POST request
 local success, response = pcall(function()
-    return httpRequest({
-        Url = API_URL,
-        Method = "POST",
+    return request({
+        Url     = API_URL,
+        Method  = "POST",
         Headers = {
             ["Content-Type"] = "application/json"
         },
@@ -44,32 +37,47 @@ local success, response = pcall(function()
     })
 end)
 
--- ===== CHECK RESPONSE =====
+-- fallback nếu không có request
+if not success or not response then
+    success, response = pcall(function()
+        return game:HttpPost(
+            API_URL,
+            body,
+            Enum.HttpContentType.ApplicationJson
+        )
+    end)
+
+    if success then
+        response = { Body = response }
+    end
+end
+
+-- Check response
 if not success or not response or not response.Body then
-    warn("Không kết nối được API!")
+    warn("⚠️ Không kết nối được API!")
     return
 end
 
--- ===== DECODE =====
+-- Decode JSON
 local data
 local ok = pcall(function()
     data = HttpService:JSONDecode(response.Body)
 end)
 
 if not ok or not data then
-    warn("Lỗi dữ liệu từ server!")
+    warn("⚠️ Lỗi decode dữ liệu từ server!")
     return
 end
 
--- ===== CHECK KEY =====
+-- Check key
 if not data.valid then
-    warn("Key không hợp lệ hoặc hết hạn! | Code:", data.code)
+    warn("❌ Key không hợp lệ hoặc hết hạn! | Code:", data.code)
     return
 end
 
-print("Key hợp lệ | Code:", data.code)
+print("✅ Key hợp lệ | Code:", data.code)
 
--- ===== LOAD SCRIPT =====
+-- Load script
 local scriptName = tostring(getgenv().NScript or "MaruHub")
 
 if scriptName == "MaruHub" then
