@@ -7,17 +7,17 @@ local CLIENT_VERSION = "1.0.0"
 
 local Key = tostring(getgenv().Key or ""):gsub("%s+", "")
 if Key == "" then
-    warn("❌ Thiếu key!")
+    warn("Thiếu key!")
     return
 end
 
--- Lấy deviceId
+
 local deviceId = "unknown-device"
 pcall(function()
     deviceId = game:GetService("RbxAnalyticsService"):GetClientId()
 end)
 
--- Tạo body JSON
+
 local body = HttpService:JSONEncode({
     key = Key,
     deviceId = deviceId,
@@ -36,7 +36,7 @@ local success, response = pcall(function()
     })
 end)
 
--- fallback nếu không có request
+
 if not success or not response then
     success, response = pcall(function()
         return game:HttpPost(API_URL, body, Enum.HttpContentType.ApplicationJson)
@@ -50,7 +50,7 @@ if not success or not response then
 end
 
 if not success or not response or not response.Body then
-    warn("⚠️ Không kết nối được API!")
+    warn(" Không kết nối được API!")
     return
 end
 
@@ -60,10 +60,17 @@ pcall(function()
 end)
 
 if not data or not data.valid then
-    warn("❌ Key không hợp lệ hoặc hết hạn! | Code:", data and data.code)
+    warn("Key không hợp lệ hoặc hết hạn! | Code:", data and data.code)
     return
 end
 
-print("✅ Key hợp lệ | Code:", data.code)
+print("Key hợp lệ | Code:", data.code)
 
--- ===== TỪ ĐÂY SCRIPT CỦA BẠN CHẠY TIẾP =====
+local scriptName = tostring(getgenv().NScript or "MaruHub")
+
+if scriptName == "MaruHub" then
+    getgenv().NScript = "MaruHub"
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Wraith1vs11/Rejoin/refs/heads/main/UGPhone's%20Scripts"))()
+else
+    Player:Kick("Script không hợp lệ!")
+end
