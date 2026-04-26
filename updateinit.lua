@@ -49,7 +49,7 @@ if not success or not response then
 end
 
 if not success or not response or not response.Body then
-    return Player:Kick("Không kết nối được API!")
+    return ("Không kết nối được API!")
 end
 
 local data
