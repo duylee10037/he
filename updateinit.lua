@@ -25,32 +25,24 @@ local body = HttpService:JSONEncode({
     clientVersion = CLIENT_VERSION
 })
 
--- ===== REQUEST =====
-local success, response = pcall(function()
-    if request then
-        return request({
-            Url = API_URL,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = body
-        })
-    else
-        error("No request")
-    end
-end)
+-- ===== REQUEST (CHUẨN EXECUTOR) =====
+local httpRequest = (syn and syn.request) or (http and http.request) or http_request or request
 
--- fallback
-if not success or not response then
-    success, response = pcall(function()
-        local res = game:HttpPost(API_URL, body, Enum.HttpContentType.ApplicationJson)
-        return {
-            StatusCode = 200,
-            Body = res
-        }
-    end)
+if not httpRequest then
+    warn("Executor không hỗ trợ request!")
+    return
 end
+
+local success, response = pcall(function()
+    return httpRequest({
+        Url = API_URL,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = body
+    })
+end)
 
 -- ===== CHECK RESPONSE =====
 if not success or not response or not response.Body then
