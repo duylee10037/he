@@ -5,67 +5,79 @@ local Player      = Players.LocalPlayer
 local API_URL = "https://web-wheat-nu-97.vercel.app/api/verify"
 local CLIENT_VERSION = "1.0.0"
 
+-- ===== GET KEY (GIỮ NGUYÊN) =====
 local Key = tostring(getgenv().Key or ""):gsub("%s+", "")
 if Key == "" then
     warn("Thiếu key!")
     return
 end
 
-
+-- ===== DEVICE ID =====
 local deviceId = "unknown-device"
 pcall(function()
     deviceId = game:GetService("RbxAnalyticsService"):GetClientId()
 end)
 
-
+-- ===== BODY =====
 local body = HttpService:JSONEncode({
     key = Key,
     deviceId = deviceId,
     clientVersion = CLIENT_VERSION
 })
 
--- Gửi POST request
+-- ===== REQUEST =====
 local success, response = pcall(function()
-    return request({
-        Url = API_URL,
-        Method = "POST",
-        Headers = {
-            ["Content-Type"] = "application/json"
-        },
-        Body = body
-    })
+    if request then
+        return request({
+            Url = API_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = body
+        })
+    else
+        error("No request")
+    end
 end)
 
-
+-- fallback
 if not success or not response then
     success, response = pcall(function()
-        return game:HttpPost(API_URL, body, Enum.HttpContentType.ApplicationJson)
-    end)
-
-    if success then
-        response = {
-            Body = response
+        local res = game:HttpPost(API_URL, body, Enum.HttpContentType.ApplicationJson)
+        return {
+            StatusCode = 200,
+            Body = res
         }
-    end
+    end)
 end
 
+-- ===== CHECK RESPONSE =====
 if not success or not response or not response.Body then
-    warn(" Không kết nối được API!")
+    warn("Không kết nối được API!")
     return
 end
 
+-- ===== DECODE =====
 local data
-pcall(function()
+local ok = pcall(function()
     data = HttpService:JSONDecode(response.Body)
 end)
 
-if not data or not data.valid then
-    warn("Key không hợp lệ hoặc hết hạn! | Code:", data and data.code)
+if not ok or not data then
+    warn("Lỗi dữ liệu từ server!")
+    return
+end
+
+-- ===== CHECK KEY =====
+if not data.valid then
+    warn("Key không hợp lệ hoặc hết hạn! | Code:", data.code)
     return
 end
 
 print("Key hợp lệ | Code:", data.code)
 
+-- ===== LOAD SCRIPT =====
 local scriptName = tostring(getgenv().NScript or "MaruHub")
 
 if scriptName == "MaruHub" then
